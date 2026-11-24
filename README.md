@@ -1,61 +1,40 @@
-# Email Encryption, Inside Out
+# Presentations
 
-A blog-style technical walkthrough presentation on email encryption — from the TLS vs E2EE split, through PGP/S-MIME internals and the metadata gap, to decentralized mail with DIDs + DIDComm.
+A public repository that hosts each presentation in its **own directory**. Every talk is self-contained (source + its own `package.json`, styles, and a built `dist/`).
 
-Built with **Slidev** (markdown → interactive slides) with heavy **Mermaid** diagramming.
+## Repository layout
 
-## Files
-
-| File | What it is |
-|---|---|
-| `slides.md` | The presentation (39 slides, one concept per slide, sized Mermaid diagrams). Edit this to change the deck. |
-| `GO-DEEPER.md` | The companion deep-dive reference — everything verified online, with RFC citations. Share this with anyone who wants the full internals. |
-| `styles/index.css` | Global CSS (hides the on-screen slide-outline TOC panel, centers diagrams). |
-| `dist/` | A pre-built static export you can deploy/host as-is. |
-| `package.json` | Slidev + theme dependencies. |
-
-## Run it
-
-```bash
-npm install          # first time only
-npm run dev          # dev server with hot reload (open the printed URL)
-npm run build        # static export to dist/
-npm run export       # PDF export (needs playwright chromium)
+```
+presentations/
+├── email-cryption/          # Presentation 1 · "Email Encryption, Inside Out"
+│   ├── slides.md            #   Slidev source (one concept per slide)
+│   ├── GO-DEEPER.md         #   companion deep-dive / blog post
+│   ├── README.md            #   that deck's own readme
+│   ├── styles/index.css     #   global CSS (TOC bar off, centered diagrams)
+│   ├── package.json         #   Slidev + theme
+│   └── dist/                #   built static export (hostable)
+└── <your-next-presentation>/  # next talk goes here
 ```
 
-## Structure (the narrative)
+## The first presentation
 
-One concept per slide, per the "How we do presentations" playbook (transformations, worked examples, form-follows-example, comparisons as tables).
+**`email-cryption/`** — "Email Encryption, Inside Out": a blog-style walkthrough of TLS vs E2EE, PGP/S-MIME internals, the metadata gap, and decentralized mail with DIDs + DIDComm. 39 slides, Mermaid diagrams, screen-fit verified.
 
-1. **Opening** — the decision you'll make; the journey.
-2. **The problem** — email is a postcard; the threat model.
-3. **TLS vs E2EE** — two layers that protect different things.
-4. **The E2EE protocols** — PGP/OpenPGP (Web of Trust) vs S/MIME (X.509 CA), platform examples in one table, what a certificate is, generation.
-5. **Hybrid key exchange** — why two algorithms, the hybrid trick, multi-recipient, receiver flow.
-6. **Secrets & forward secrecy** — private key vs session key blast radius; the no-forward-secrecy gap.
-7. **The metadata problem** — what's still exposed + RFC 9788, ECH, zero-access providers, sealed sender.
-8. **Decentralized mail** — DIDs + DIDComm (anoncrypt/authcrypt) vs centralized email, and why DIDs aren't a complete fix.
-9. **Where crypto runs** — Secure Enclave / TEE / TPM / smart card vs RAM, and the universal session-key-exit gap.
-10. **Wrap** — the decision revisited; further reading.
+## Adding a new presentation
 
-## UI fixes applied
+1. Create a directory for it, e.g. `mkdir my-talk`.
+2. Put its `slides.md` and any supporting files inside.
+3. Give it its own `package.json` (a minimal one is enough):
+   ```json
+   { "name": "my-talk", "private": true, "type": "module",
+     "scripts": { "dev": "slidev", "build": "slidev build" },
+     "dependencies": { "@slidev/cli": "^0.50.0", "@slidev/theme-default": "^0.25.0" } }
+   ```
+4. Run and export from that directory: `npm install && npm run dev` (or `npm run build` → `dist/`).
+5. Commit and push — the deck lives alongside the others.
 
-- **Slide-outline TOC bar** removed via `styles/index.css` (the `.autocomplete-list` top-right panel that used to stay visible and intercept clicks).
-- **Mermaid sizing**: every diagram is scaled with `{scale: …}` per block so it fits the slide (verified in-browser, no overflow). The journey and hybrid were restructured to one-concept slides.
+> Each deck is independent: install, build, and serve it from its own folder.
 
-## Fact-checking notes
+## Hosting
 
-All dates and claims were verified against primary sources in **November 2026**. Key corrections baked in (a few common errors worth knowing):
-
-- S/MIME EKU OID is **`1.3.6.1.5.5.7.3.4`**, not `.3.12`.
-- Android Keystore **does** support RSA decryption — the OpenPGP gap is key types/schemes + no session-key boundary.
-- PGPony is **hardware-key-first** (NFC/USB smart cards), not pure user-space RAM.
-- OpenKeychain is unmaintained (Feb 2024) but **not** incompatible with modern Android.
-- `did:key` ≠ Veres One (`did:v1`); DIDComm v2 is DIF-ratified, not an IETF RFC.
-- RFC 9580 adds AEAD/X25519/v6 keys but **not** post-quantum (still a draft).
-- Thunderbird's "Encrypt Subject" **predates** RFC 9788 and isn't an implementation of it.
-- Mailchain (ENS-based email) shut down **May 2026**.
-
-## Keyboard
-
-`→` next · `←` back · `o` overview · `p` presenter mode · `f` fullscreen. (`?` for all shortcuts.)
+Each deck's `dist/` is a static export — point GitHub Pages (or any static host) at a deck's `dist/` folder to serve it.
