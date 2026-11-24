@@ -231,14 +231,18 @@ flowchart TB
 
 | Platform | Standard | Subject encrypted? | Key storage | Notes |
 |---|---|---|---|---|
-| **Proton Mail** | OpenPGP | ❌ plaintext | Client-side (JS) | Body E2EE; subject kept plaintext for PGP interop |
-| **Tuta** | **TutaCrypt** (proprietary) | ✅ | Client-side | Hybrid X25519 + Kyber-1024 (2024); avoids PGP for subject privacy |
-| **Thunderbird** | OpenPGP + S/MIME | ✅ (OpenPGP) | Local (GPG) | "Encrypt Subject" **predates** RFC 9788 |
-| **Apple Mail** | S/MIME | ❌ | Keychain / Secure Enclave | See Part 7 for the P-256 vs RSA split |
-| **Outlook (M365)** | S/MIME (+PGP add-ins) | ❌ | Windows cert store | Enterprise CA deployment |
+| **Proton Mail** | OpenPGP | ❌ | Client (JS) | Body E2EE; subject plaintext for interop |
+| **Tuta** | **TutaCrypt** | ✅ | Client-side | X25519 + Kyber-1024; subject privacy |
+| **Thunderbird** | OpenPGP + S/MIME | ✅ | Local (GPG) | "Encrypt Subject" **pre-dates** RFC 9788 |
+| **Apple Mail** | S/MIME | ❌ | Keychain / SE | P-256 vs RSA split → Part 7 |
+| **Outlook (M365)** | S/MIME (+PGP) | ❌ | Windows cert store | Enterprise CA deployment |
 | **Gmail Workspace** | S/MIME (hosted) | ❌ | Google-managed | Server-side S/MIME, GWSMO client |
-| **PGPony (Android)** | OpenPGP | ✅ | **Smart cards** (NFC/USB) | Card-backed keys; active |
-| **OpenKeychain (Android)** | OpenPGP | — | User-space RAM | Unmaintained (last v6.0.4, Feb 2024) |
+| **PGPony** | OpenPGP | ✅ | **Smart cards** (NFC/USB) | Card-backed keys; active |
+| **OpenKeychain** | OpenPGP | — | User-space RAM | Unmaintained (v6.0.4, Feb 2024) |
+
+<style>
+  table { font-size: 0.72rem !important; }
+</style>
 
 ---
 
@@ -329,11 +333,11 @@ flowchart TB
 
 > **One concept:** the client *cryptographically verifies* the chain up to a trusted root, then decrypts.
 
-```mermaid {scale: 0.8}
+```mermaid {scale: 0.45}
 flowchart TB
-    P[Parse MIME → find EnvelopedData] --> M{Is this RecipientInfo mine?}
-    M --> V[Trust: build chain → root in store<br/>EKU = emailProtection · SAN matches From]
-    V --> D[Unwrap session key with my private key]
+    P[Parse MIME → EnvelopedData] --> M{RecipientInfo mine?}
+    M --> V[Verify chain → root in store<br/>EKU · SAN matches From]
+    V --> D[Unwrap session key<br/>with my private key]
     D --> B[AES-decrypt body]
     B --> PT[🔓 plaintext]
 ```
@@ -448,10 +452,10 @@ flowchart LR
 
 > **One concept:** From/To and timing/size are exposed *because SMTP requires them for routing*.
 
-```mermaid {scale: 0.85}
+```mermaid {scale: 0.6}
 flowchart TB
-    A[SMTP routing] -->|"needs a resolvable From / To"| B[who-to-whom visible]
-    B --> C[Fully hiding it needs a redesign]
+    A[SMTP routing] -->|"needs resolvable From / To"| B[who-to-whom visible]
+    B --> C[Hiding it fully needs a redesign]
     C --> D[Sealed sender · or opaque routing tokens]
     style D fill:#fef3c7,stroke:#b45309
 ```
@@ -549,7 +553,7 @@ flowchart LR
 
 > **One concept:** the hybrid design maps to **two physical places** — and the session key is the bridge that crosses them.
 
-```mermaid {scale: 0.6}
+```mermaid {scale: 0.4}
 flowchart TB
     subgraph HW["🔒 Secure boundary: SE · TPM · smart card"]
         K[Private key] --> U[unwrap session key]
@@ -563,6 +567,10 @@ flowchart TB
 |---|---|---|
 | Asymmetric (unwrap session key) | Secure hardware (if configured) | Small, fast, key never leaves |
 | Symmetric (AES body decrypt) | Regular CPU + RAM | Bulk data — can't fit in an enclave |
+
+<style>
+  table { font-size: 0.78rem !important; }
+</style>
 
 > **The unavoidable gap:** the session key and plaintext always transit regular memory.
 
@@ -603,18 +611,18 @@ flowchart TB
 
 > **One concept:** the TPM wraps your key; the decrypt happens *inside* the chip.
 
-```mermaid {scale: 0.7}
+```mermaid {scale: 0.52}
 sequenceDiagram
     participant g as gpg
     participant a as gpg-agent
     participant t as tpm2daemon
     participant T as TPM
     g->>a: decrypt, key grip = XYZ
-    a->>t: shadow type tpm2-v1 → divert
-    t->>T: TPM2_Load (parent 81000001)
+    a->>t: shadow tpm2-v1 → divert
+    t->>T: TPM2_Load (81000001)
     t->>T: TPM2_RSA_Decrypt(session key)
-    T-->>t: session key (inside TPM)
-    t-->>a: session key → regular RAM
+    T-->>t: session key (in TPM)
+    t-->>a: session key → RAM
     a-->>g: AES-decrypt body
 ```
 
@@ -626,16 +634,16 @@ sequenceDiagram
 
 > **One concept:** the private key physically lives on the card and can **never be exported**.
 
-```mermaid {scale: 0.7}
+```mermaid {scale: 0.55}
 sequenceDiagram
     participant g as gpg
     participant a as gpg-agent
     participant s as scdaemon
     participant C as Card (own CPU)
     g->>a: decrypt
-    a->>s: key is on card (stub → serial)
+    a->>s: key on card (stub → serial)
     s->>C: APDU: VERIFY(PIN) → DECRYPT
-    Note over C: PIN verified on-card · 3 tries → lockout
+    Note over C: PIN on-card · 3 tries → lockout
     C-->>s: session key (via APDU)
     s-->>a: regular RAM
     a-->>g: AES-decrypt body
@@ -649,7 +657,7 @@ sequenceDiagram
 
 > **One concept:** every platform protects the *private key*; none protects the *session key* in the open.
 
-```mermaid {scale: 0.5}
+```mermaid {scale: 0.38}
 flowchart TB
     subgraph B1["🔒 Secure boundary"]
         K[Private key] --> OP[asymmetric op] --> SK[session key]
@@ -688,16 +696,16 @@ flowchart TB
 
 > **GOOD / the choice you leave with** — "which layer protects what I care about?"
 
-```mermaid {scale: 0.9}
+```mermaid {scale: 0.72}
 flowchart LR
-    A["Body privacy?<br/>→ E2EE (PGP/S-MIME)"] --> D[Decide]
+    A["Body privacy?<br/>→ E2EE"] --> D[Decide]
     B["In-transit safety?<br/>→ TLS"] --> D
-    C["Who-to-whom hidden?<br/>→ not solved today<br/>(DIDs/mixnets next)"] --> D
+    C["Who-to-whom?<br/>→ not solved today"] --> D
 ```
 
 - **Know your layers** — TLS ≠ E2EE.
-- **The private key is the crown jewel**, and it has **no forward secrecy**.
-- **Metadata** is the unsolved frontier (RFC 9788, ECH, zero-access, sealed sender).
+- **Private key = crown jewel**, and it has **no forward secrecy**.
+- **Metadata** is the unsolved frontier (RFC 9788, ECH, sealed sender).
 - **DIDs/DIDComm** are the roadmap, not the finished product.
 - **Secure hardware narrows** the blast radius but can't stop the session-key exit.
 
