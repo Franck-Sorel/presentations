@@ -6,7 +6,7 @@ A public repository that hosts each presentation in its **own directory**. Every
 
 ```
 presentations/
-├── email-cryption/          # Presentation 1 · "Email Encryption, Inside Out"
+├── email-encryption/        # Presentation 1 · "Email Encryption, Inside Out"
 │   ├── slides.md            #   Slidev source (one concept per slide)
 │   ├── GO-DEEPER.md         #   companion deep-dive / blog post
 │   ├── README.md            #   that deck's own readme
@@ -18,7 +18,7 @@ presentations/
 
 ## The first presentation
 
-**`email-cryption/`** — "Email Encryption, Inside Out": a blog-style walkthrough of TLS vs E2EE, PGP/S-MIME internals, the metadata gap, and decentralized mail with DIDs + DIDComm. 39 slides, Mermaid diagrams, screen-fit verified.
+**`email-encryption/`** — "Email Encryption, Inside Out": a blog-style walkthrough of TLS vs E2EE, PGP/S-MIME internals, the metadata gap, and decentralized mail with DIDs + DIDComm. 39 slides, Mermaid diagrams, screen-fit verified.
 
 ## Adding a new presentation
 

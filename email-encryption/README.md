@@ -1,6 +1,6 @@
 # Email Encryption, Inside Out
 
-> Part of the **`presentations`** repo — this deck lives in its own directory, `email-cryption/`. Each presentation is a self-contained directory; run it from here.
+> Part of the **`presentations`** repo — this deck lives in its own directory, `email-encryption/`. Each presentation is a self-contained directory; run it from here.
 
 A blog-style technical walkthrough presentation on email encryption — from the TLS vs E2EE split, through PGP/S-MIME internals and the metadata gap, to decentralized mail with DIDs + DIDComm.
 
