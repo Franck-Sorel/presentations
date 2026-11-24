@@ -1,0 +1,15 @@
+/* Global styles — loaded automatically by Slidev */
+
+/* Hide the on-screen slide-outline list (top-right numbered TOC panel)
+   so it never obscures the slide or intercepts navigation clicks. */
+.autocomplete-list {
+  display: none !important;
+}
+
+/* Center Mermaid diagrams within their slide. The SVG lives in a shadow
+   root, so sizing is driven by the per-diagram `scale` in slides.md. */
+.mermaid {
+  display: flex;
+  justify-content: center;
+  margin: 0.5rem 0;
+}
